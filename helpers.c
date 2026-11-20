@@ -8,18 +8,24 @@
 // Sanitize the file name.
 // Eg. /data/local/data.txt --> _data_local_data_txt
 char *sanitize(char *filename){
+    size_t len = strlen(filename);
+    char *sanitized_fname = malloc(len+1);
+    if (sanitized_fname == NULL){
+        return NULL;   
+    }
+    memcpy(sanitized_fname, filename, len);
     
     const char UNIX_SUPPORTED_CHARS[33] = "!/\"#$%&'()*+,-.:;<=>?@[\\]^`{|}~";
 
     for (int j =0;UNIX_SUPPORTED_CHARS[j]!= '\0'; ++j){
         //printf("%c\n", UNIX_SUPPORTED_CHARS[j]);
-        for (int i=0;filename[i]!='\0';i++){
-            if(UNIX_SUPPORTED_CHARS[j]==filename[i])
-                filename[i] = '_';
+        for (int i=0;sanitized_fname[i]!='\0';i++){
+            if(UNIX_SUPPORTED_CHARS[j]==sanitized_fname[i])
+                sanitized_fname[i] = '_';
         }
     }
     
-    return filename;
+    return sanitized_fname;
 }
 
 // Check if stale file already exists
@@ -58,3 +64,14 @@ char *get_base_dir(){
     return base_dir;
 }
 
+bool wait_on_file(char *filename, u_int16_t wait_time){
+    while (true){
+        if(access(filename,F_OK) == 0){
+            printf("File '%s' exists.\n",filename);
+            return true;
+        }else{
+            sleep(wait_time);
+            printf("File '%s' does not exist.\n",filename);
+        }
+    }
+}

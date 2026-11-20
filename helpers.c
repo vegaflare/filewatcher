@@ -10,8 +10,6 @@
 char *sanitize(char *filename){
     
     const char UNIX_SUPPORTED_CHARS[33] = "!/\"#$%&'()*+,-.:;<=>?@[\\]^`{|}~";
-    int i = 0;
-    int j = 0;
 
     for (int j =0;UNIX_SUPPORTED_CHARS[j]!= '\0'; ++j){
         //printf("%c\n", UNIX_SUPPORTED_CHARS[j]);
@@ -48,7 +46,7 @@ char *get_base_dir(){
     memcpy(base_dir+home_len, fw_home, 11);
     // Check if base dir already exist and create if it doesn't
     if(stat(base_dir, &st) ==0 ){
-        if(S_ISDIR(st.st_mode) == 0){
+        if(S_ISDIR(st.st_mode)){
             return base_dir;
         }else{
             printf("Base path '%s' already exists but is not a directory.\n", base_dir);
@@ -59,3 +57,4 @@ char *get_base_dir(){
         printf("Base directory '%s' created.\n", base_dir);
     return base_dir;
 }
+

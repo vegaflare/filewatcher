@@ -7,6 +7,7 @@
 
     int main(int argc, char *argv[]){
         bool watch_flag = false;
+        FILE *stale_fileptr;
         // variable to track the file name index
         int file_pos = 0;
         // Validate cline arguments and print hit if invalid
@@ -59,20 +60,29 @@
                 return -1;
             }
             // Construct full path to stale_file
-            memcpy(stale_file_f, base_dir, base_dir_len);
-            memcpy(stale_file_f + base_dir_len, stale_file, len_sf + 1);
-            free(base_dir);
-            printf("Full path to stale file: %s\n", stale_file_f);
+        memcpy(stale_file_f, base_dir, base_dir_len);
+        memcpy(stale_file_f + base_dir_len, stale_file, len_sf + 1);
+        free(base_dir);
+        printf("Full path to stale file: %s\n", stale_file_f);
 
 
-
-            if(check_stale_file(stale_file_f)){
-                printf("Stale file already exists\n");
+        // Check and create a stale file to mark that the process is running.
+        if(check_stale_file(stale_file_f)){
+            printf("Stale file already exists\n");
                 
+        }else{
+            printf("Stale file doesn't exist\n");
+            stale_fileptr = fopen(stale_file_f, "w");
+            if (stale_fileptr == NULL){
+                printf("Stale file creation failed.\n");
+                return -2;
             }else{
-                printf("Stale file doesn't exist\n");
+                printf("Stale file created.\n");
             }
+        }
+
         
+        fclose(stale_fileptr);
         free(stale_file_f);
         return 0;
 

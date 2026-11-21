@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <time.h>
 #include "helpers.h"
 
 // Sanitize the file name.
@@ -74,19 +75,75 @@ char *get_base_dir()
     return base_dir;
 }
 
-bool wait_on_file(char *filename, u_int16_t wait_time)
+bool wait_on_file(char *filename, u_int16_t wait_time, bool watch)
 {
+    bool file_exist_already = true; // Assume the file already exists
+    struct stat st;
+    time_t last_mod = 0;
+    char buffer[26];
+    // Formats as YYYY-MM-DD HH:MM:SS
+
     while (true)
     {
         if (access(filename, F_OK) == 0)
         {
-            printf("File '%s' exists.\n", filename);
-            return true;
+            if (file_exist_already && watch)
+            {
+                if (stat(filename, &st) == 0)
+                { // syscall for checking file metadata
+                    last_mod = st.st_mtime;
+                    struct tm *tm_info = localtime(&last_mod);
+                    if (tm_info == NULL)
+                    {
+                        perror("localtime");
+                        return false;
+                    }
+                    // Print out the last mod date and time
+                    printf("File '%s' exists already with last mod %d-%d-%d %d:%d:%d \n",
+                           filename,
+                           tm_info->tm_year +1900,
+                           tm_info->tm_mon,
+                           tm_info->tm_mday,
+                           tm_info->tm_hour,
+                           tm_info->tm_min,
+                           tm_info->tm_sec);
+
+                    // Now wait for the file for modifications
+                    while (true)
+                    {
+                        if (stat(filename, &st) == 0)
+                        {
+                            // Check if file was modified
+                            if (st.st_mtime > last_mod)
+                            {
+                                struct tm *new_tm_info = localtime(&st.st_mtime);
+                                // Print out the last mod date and time
+                                printf("File '%s' has been modified at %d-%d-%d %d:%d:%d \n",
+                                       filename,
+                                       new_tm_info->tm_year + 1900,
+                                       new_tm_info->tm_mon,
+                                       new_tm_info->tm_mday,
+                                       new_tm_info->tm_hour,
+                                       new_tm_info->tm_min,
+                                       new_tm_info->tm_sec);
+                                return true;
+                            }
+                        }
+                        sleep(wait_time);
+                    }
+                }
+            }
+            else
+            {
+                printf("File '%s' exists.\n", filename);
+                return true;
+            }
         }
         else
         {
             sleep(wait_time);
             printf("File '%s' does not exist.\n", filename);
+            file_exist_already = false; // Confirms the file doesn't exist the first time around.
         }
     }
 }

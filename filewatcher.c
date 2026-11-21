@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Check if a file was passed in the arguments
     if (file_pos == 0)
     {
         printf("No filename passed with '-f' flag.\n");
@@ -69,6 +70,7 @@ int main(int argc, char *argv[])
     char *stale_file = sanitize(file_name);
     if (stale_file == NULL)
     {
+        printf("Error creating stale file.\n");
         return 5;
     }
     printf("Sanitized file: %s \n", stale_file);
@@ -91,7 +93,7 @@ int main(int argc, char *argv[])
     // Construct full path to stale_file
     memcpy(stale_file_f, base_dir, base_dir_len);
     memcpy(stale_file_f + base_dir_len, stale_file, len_sf + 1);
-    free(base_dir);
+    free(base_dir); // Free this as it's not required anymore
     printf("Full path to stale file: %s\n", stale_file_f);
 
     // Check and create a stale file to mark that the process is running.
@@ -112,7 +114,6 @@ int main(int argc, char *argv[])
 
         printf("open() took %.6f seconds\n", elapsed);
 
-        printf("Not stuck\n");
         if (stale_fd == -1)
         {
 
@@ -130,7 +131,7 @@ int main(int argc, char *argv[])
     else
     {
         printf("Stale file doesn't exist\n");
-        stale_fd = open(stale_file_f, O_CREAT | O_RDWR | O_EXCL, 0644);
+        stale_fd = open(stale_file_f, O_CREAT | O_RDWR, 0644);
         if (stale_fd == -1)
         {
             printf("Stale file creation failed.\n");
@@ -138,12 +139,18 @@ int main(int argc, char *argv[])
         }
         else
         {
-            printf("Stale file created.\n");
+            if (flock(stale_fd, LOCK_EX | LOCK_NB) == -1)
+            {
+                perror("flock");
+                close(stale_fd);
+                return -2;
+            }
+            printf("Stale file created: %i. \n", stale_fd);
         }
     }
 
     // Now wait for the file
-    if (wait_on_file(file_name, 10))
+    if (wait_on_file(file_name, 10, watch_flag))
     {
         printf("File found. Exiting...\n");
     }

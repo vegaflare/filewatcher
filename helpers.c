@@ -99,7 +99,7 @@ bool wait_on_file(char *filename, u_int16_t wait_time, bool watch)
                         return false;
                     }
                     // Print out the last mod date and time
-                    printf("File '%s' exists already with last mod %d-%d-%d %d:%d:%d \n",
+                    printf("File '%s' exists already with last mod %d-%02d-%02d %02d:%02d:%02d \n",
                            filename,
                            tm_info->tm_year +1900,
                            tm_info->tm_mon,
@@ -118,7 +118,7 @@ bool wait_on_file(char *filename, u_int16_t wait_time, bool watch)
                             {
                                 struct tm *new_tm_info = localtime(&st.st_mtime);
                                 // Print out the last mod date and time
-                                printf("File '%s' has been modified at %d-%d-%d %d:%d:%d \n",
+                                printf("File '%s' has been modified at %d-%02d-%02d %02d:%02d:%02d \n",
                                        filename,
                                        new_tm_info->tm_year + 1900,
                                        new_tm_info->tm_mon,
